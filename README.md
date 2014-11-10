@@ -13,12 +13,6 @@ software which enables the use of this currency.
 For more information, as well as an immediately useable, binary version of
 the Snowballs client software, see http://www.mmxivcoin.com/snowball.html
 
-Specifics
----------
-Coin Type: PoS with PoW for initial network stabilization.<br />
-Premine: 2014 Snowballs for coin swap.<br />
-PoS Reward: 50% per year. 24 hours min stake, 30 days max.<br />
-PoW Reward: 0, PoW no longer accepted past block 25,000.
 
 Copyright / License
 -------------------
