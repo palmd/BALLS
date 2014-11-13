@@ -835,10 +835,24 @@ int64 GetProofOfWorkReward(uint256 hashPrevBlock)
     return nSubsidy;
 }
 
+int64 GetProofOfStakeRewardYear(int nHeight) {
+    static int64 nBaseCoinYear = 5000 * CENT;
+    if (nHeight <= 80000)
+        return nBaseCoinYear;
+
+    if (nHeight <= 85000)
+        return nBaseCoinYear + ((nHeight - 80000) * CENT);
+
+    if (nHeight <= 94000)
+        return (nBaseCoinYear * 2) - ((nHeight - 85000) * CENT);
+    
+    return 1000 * CENT;
+}
+
 // Snowballs: miner's coin stake is rewarded based on coin age spent (coin-days)
-int64 GetProofOfStakeReward(int64 nCoinAge)
+int64 GetProofOfStakeReward(int64 nCoinAge, int nHeight)
 {
-    static int64 nRewardCoinYear = 5000 * CENT;  // creation amount per coin-year
+    int64 nRewardCoinYear = GetProofOfStakeRewardYear(nHeight);  // creation amount per coin-year
     int64 nSubsidy = nRewardCoinYear * nCoinAge * 33 / (365 * 33 + 8);
     if (fDebug && GetBoolArg("-printcreation"))
         printf("GetProofOfStakeReward(): create=%s nCoinAge=%"PRI64d"\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
@@ -1221,7 +1235,7 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
             if (!GetCoinAge(txdb, nCoinAge))
                 return error("ConnectInputs() : %s unable to get coin age for coinstake", GetHash().ToString().substr(0,10).c_str());
             int64 nStakeReward = GetValueOut() - nValueIn;
-            if (nStakeReward > GetProofOfStakeReward(nCoinAge) - GetMinFee() + MIN_TX_FEE)
+            if (nStakeReward > GetProofOfStakeReward(nCoinAge, pindexBlock->nHeight) - GetMinFee() + MIN_TX_FEE)
                 return DoS(100, error("ConnectInputs() : %s stake reward exceeded", GetHash().ToString().substr(0,10).c_str()));
         }
         else
@@ -2634,9 +2648,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> pfrom->nVersion >> pfrom->nServices >> nTime >> addrMe;
         
         bool badVersion = false;
-        if (pfrom->nVersion < 60006)
+        if (pfrom->nVersion < 60007)
         	badVersion = true;
-        if (GetAdjustedTime() >= 1414900800 && pfrom->nVersion < 60007)
+        if (nBestHeight > 80000 && pfrom->nVersion < 60008)
         	badVersion = true;
         	
         if (badVersion)
